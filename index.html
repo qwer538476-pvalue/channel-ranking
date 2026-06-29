@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한국일보 트래픽 리포트</title>
+<style>
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Regular.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Medium.woff2') format('woff2');
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Bold.woff2') format('woff2');
+  font-weight: 700;
+}
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,600;0,700;1,500&family=Roboto+Mono:wght@400;500;600;700&display=swap');
+
+:root{
+  --paper:#FAF7F0;
+  --surface:#FFFFFF;
+  --ink:#1C1B19;
+  --ink-soft:#5B5650;
+  --ink-faint:#A3998C;
+  --rule:#DCD4C4;
+  --rule-strong:#1C1B19;
+  --masthead-red:#A23B33;
+  --naver:#03C75A; --daum:#D8A900; --google:#4285F4; --hk:#A23B33;
+  --up:#A23B33; --down:#2F5C8A;
+  --serif:'Source Serif 4', Georgia, serif;
+  --mono:'Roboto Mono', monospace;
+  --sans:'Pretendard', -apple-system, sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:14px; line-height:1.5;}
+body{padding:0 0 90px;}
+.wrap{max-width:1180px; margin:0 auto; padding:0 28px;}
+
+/* ===================== 비밀번호 게이트 ===================== */
+#gate{
+  position:fixed; inset:0; background:var(--paper);
+  display:flex; align-items:center; justify-content:center;
+  z-index:1000;
+}
+.gate-card{
+  width:100%; max-width:360px; padding:0 28px;
+  text-align:center;
+}
+.gate-mark{
+  font-family:var(--serif); font-weight:700; font-size:13px;
+  letter-spacing:0.28em; color:var(--masthead-red); margin-bottom:18px;
+}
+.gate-card h1{
+  font-family:var(--serif); font-weight:700; font-size:26px;
+  margin-bottom:6px; letter-spacing:-0.01em;
+}
+.gate-card .gate-sub{font-size:12.5px; color:var(--ink-faint); margin-bottom:32px;}
+.gate-form{display:flex; flex-direction:column; gap:10px;}
+#gatePassword{
+  font-family:var(--mono); font-size:15px; text-align:center;
+  border:none; border-bottom:1.5px solid var(--ink); background:transparent;
+  padding:10px 4px; letter-spacing:0.15em; outline:none;
+}
+#gatePassword:focus{border-bottom-color:var(--masthead-red);}
+.gate-form button{
+  font-family:var(--sans); font-weight:600; font-size:13.5px;
+  background:var(--ink); color:var(--paper); border:none;
+  padding:11px; cursor:pointer; margin-top:14px; transition:background .15s;
+}
+.gate-form button:hover{background:var(--masthead-red);}
+.gate-error{font-size:12px; color:var(--masthead-red); margin-top:10px; min-height:16px;}
+
+#app{display:none;}
+
+/* ===================== 마스트헤드 ===================== */
+header{border-bottom:4px solid var(--rule-strong); padding:22px 0 16px; margin-bottom:8px;}
+.masthead-top{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--mono); font-size:11px; color:var(--ink-faint);
+  letter-spacing:0.04em; padding-bottom:14px; border-bottom:1px solid var(--rule);
+  margin-bottom:16px;
+}
+.masthead-main{display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px;}
+.title-block .eyebrow{
+  font-family:var(--mono); font-size:11px; font-weight:600; color:var(--masthead-red);
+  letter-spacing:0.18em; margin-bottom:6px;
+}
+.title-block h1{font-family:var(--serif); font-size:30px; font-weight:700; letter-spacing:-0.01em; color:var(--ink);}
+.title-block .sub{font-family:var(--sans); font-size:12.5px; color:var(--ink-soft); margin-top:5px;}
+
+.controls{display:flex; gap:10px; align-items:center;}
+.period-tabs{display:flex; border:1px solid var(--rule-strong);}
+.period-tabs button{
+  font-family:var(--sans); font-size:12.5px; font-weight:600; color:var(--ink-soft);
+  background:transparent; border:none; padding:8px 16px; cursor:pointer;
+  border-right:1px solid var(--rule-strong); transition:all .15s;
+}
+.period-tabs button:last-child{border-right:none;}
+.period-tabs button.active{background:var(--ink); color:var(--paper);}
+#dateInput{
+  font-family:var(--mono); font-size:12.5px; background:transparent;
+  border:1px solid var(--rule-strong); color:var(--ink); padding:7px 10px;
+}
+
+/* Status line */
+.status-line{
+  font-family:var(--mono); font-size:11.5px; color:var(--ink-faint);
+  margin-bottom:24px; min-height:16px;
+}
+.status-line.loading{color:var(--ink-soft);}
+.status-line.error{color:var(--up);}
+
+/* ===================== 인사이트 카드 ===================== */
+.insight-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:40px; border:1px solid var(--rule-strong);}
+@media (max-width:900px){.insight-grid{grid-template-columns:repeat(2,1fr);}}
+.insight-card{
+  background:var(--surface); padding:20px 18px;
+  border-right:1px solid var(--rule); position:relative;
+}
+.insight-card:last-child{border-right:none;}
+.insight-card .label{font-family:var(--sans); font-size:11.5px; color:var(--ink-faint); font-weight:600; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.04em;}
+.insight-card .value{font-family:var(--mono); font-size:27px; font-weight:700; line-height:1; color:var(--ink);}
+.insight-card .delta{font-family:var(--mono); font-size:12px; font-weight:600; margin-top:8px;}
+.insight-card .delta.up{color:var(--up);} .insight-card .delta.down{color:var(--down);}
+.insight-card .note{font-size:11.5px; color:var(--ink-faint); margin-top:9px; line-height:1.4;}
+.insight-card.highlight{background:var(--ink);}
+.insight-card.highlight .label{color:#C9A89E;}
+.insight-card.highlight .value{color:var(--paper);}
+.insight-card.highlight .note{color:#8E887E;}
+.skeleton{background:linear-gradient(90deg,#EFE9DC 25%,#FAF7F0 50%,#EFE9DC 75%); background-size:200% 100%; animation:shimmer 1.3s infinite; height:27px; width:70%;}
+@keyframes shimmer{0%{background-position:200% 0;} 100%{background-position:-200% 0;}}
+
+/* ===================== Section ===================== */
+section{margin-bottom:44px;}
+.section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid var(--rule-strong);}
+.section-head h2{font-family:var(--serif); font-size:18px; font-weight:700;}
+.section-head .desc{font-family:var(--mono); font-size:11px; color:var(--ink-faint);}
+
+/* Channel bar chart */
+.channel-bars{background:var(--surface); border:1px solid var(--rule); padding:20px 20px 6px;}
+.bar-row{display:grid; grid-template-columns:90px 1fr 90px 72px; align-items:center; gap:14px; padding:10px 0; border-bottom:1px solid var(--rule);}
+.bar-row:last-child{border-bottom:none;}
+.bar-name{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600;}
+.dot{width:7px; height:7px; border-radius:50%; flex:none;}
+.bar-track{position:relative; height:14px; background:#EFE9DC; overflow:hidden;}
+.bar-fill{position:absolute; left:0; top:0; height:100%; transition:width .5s ease;}
+.bar-pv{font-family:var(--mono); font-size:12.5px; text-align:right;}
+.bar-delta{font-family:var(--mono); font-size:11.5px; font-weight:600; text-align:right;}
+.bar-delta.up{color:var(--up);} .bar-delta.down{color:var(--down);}
+
+/* Article rank cards */
+.rank-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+@media (max-width:860px){.rank-grid{grid-template-columns:1fr;}}
+.rank-card{background:var(--surface); border:1px solid var(--rule);}
+.rank-card-head{display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid var(--rule-strong);}
+.rank-card-head .dot{width:9px; height:9px;}
+.rank-card-head h3{font-family:var(--serif); font-size:15px; font-weight:700;}
+.rank-card-head .meta{font-size:11px; color:var(--ink-faint); margin-left:auto; font-family:var(--mono);}
+.rank-list{list-style:none;}
+.rank-item{display:flex; gap:13px; padding:13px 18px; border-bottom:1px solid var(--rule);}
+.rank-item:last-child{border-bottom:none;}
+.rank-num{font-family:var(--serif); font-weight:700; font-size:15px; color:var(--ink-faint); width:20px; flex:none; padding-top:1px;}
+.rank-item:nth-child(-n+3) .rank-num{color:var(--masthead-red);}
+.rank-body{flex:1; min-width:0;}
+.rank-title{font-size:13px; font-weight:500; line-height:1.45; margin-bottom:6px;}
+.rank-title a{color:var(--ink); text-decoration:none;}
+.rank-title a:hover{color:var(--masthead-red); text-decoration:underline;}
+.rank-sub{display:flex; gap:11px; flex-wrap:wrap; font-size:11px; color:var(--ink-faint);}
+.rank-sub b{font-family:var(--mono); font-weight:500; color:var(--ink-soft);}
+.empty-note{padding:36px 16px; text-align:center; color:var(--ink-faint); font-size:13px; font-style:italic;}
+
+footer{text-align:center; color:var(--ink-faint); font-family:var(--mono); font-size:11px; margin-top:56px; padding-top:22px; border-top:1px solid var(--rule);}
+</style>
+</head>
+<body>
+
+<!-- ===================== 비밀번호 게이트 ===================== -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-mark">HANKOOKILBO DATA ROOM</div>
+    <h1>트래픽 리포트</h1>
+    <div class="gate-sub">비밀번호를 입력해주세요</div>
+    <div class="gate-form">
+      <input type="password" id="gatePassword" placeholder="••••••••" autocomplete="off">
+      <button id="gateSubmit">입장</button>
+    </div>
+    <div class="gate-error" id="gateError"></div>
+  </div>
+</div>
+
+<!-- ===================== 본문 ===================== -->
+<div id="app">
+
+<header>
+  <div class="wrap">
+    <div class="masthead-top">
+      <span id="todayLabel">2026. 06. 26.</span>
+      <span>HANKOOKILBO DATA ROOM</span>
+    </div>
+    <div class="masthead-main">
+      <div class="title-block">
+        <div class="eyebrow">TRAFFIC REPORT</div>
+        <h1>유입경로별 콘텐츠 현황</h1>
+        <div class="sub">HERB · GA4 실시간 연동</div>
+      </div>
+      <div class="controls">
+        <input type="date" id="dateInput">
+        <input type="week" id="weekInput" style="display:none;">
+        <input type="month" id="monthInput" style="display:none;">
+        <div class="period-tabs">
+          <button data-period="day" class="active">일간</button>
+          <button data-period="week">주간</button>
+          <button data-period="month">월간</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="status-line" id="statusLine">불러오는 중...</div>
+
+  <!-- 인사이트 카드 -->
+  <div class="insight-grid" id="insightGrid"></div>
+
+  <!-- 채널별 PV -->
+  <section>
+    <div class="section-head">
+      <h2>유입경로별 PV</h2>
+      <div class="desc" id="channelDesc">전주 동기간 대비</div>
+    </div>
+    <div class="channel-bars" id="channelBars">
+      <div class="empty-note">불러오는 중...</div>
+    </div>
+  </section>
+
+  <!-- 네이버/다음 톱10 -->
+  <section>
+    <div class="section-head">
+      <h2>포털 유입 기사 TOP 10</h2>
+      <div class="desc">포털 PV 기준 · 일간 데이터만 제공</div>
+    </div>
+    <div class="rank-grid">
+      <div class="rank-card">
+        <div class="rank-card-head"><span class="dot" style="background:var(--naver)"></span><h3>네이버</h3><span class="meta" id="naverMeta"></span></div>
+        <ul class="rank-list" id="naverList"><li class="empty-note" style="list-style:none;">불러오는 중...</li></ul>
+      </div>
+      <div class="rank-card">
+        <div class="rank-card-head"><span class="dot" style="background:var(--daum)"></span><h3>다음</h3><span class="meta" id="daumMeta"></span></div>
+        <ul class="rank-list" id="daumList"><li class="empty-note" style="list-style:none;">불러오는 중...</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 구글 -->
+  <section>
+    <div class="section-head">
+      <h2>구글 유입 기사 TOP 10</h2>
+      <div class="desc">검색+디스커버 합산 · PV 기준</div>
+    </div>
+    <div class="rank-card" style="max-width:600px;">
+      <div class="rank-card-head"><span class="dot" style="background:var(--google)"></span><h3>구글</h3><span class="meta" id="googleMeta"></span></div>
+      <ul class="rank-list" id="googleList"><li class="empty-note" style="list-style:none;">불러오는 중...</li></ul>
+    </div>
+  </section>
+
+</div>
+
+<footer>데이터 출처 — HERB inchannel / bestnews_in / daily_aggs (hmapapi.hankookilbo.com), GA4 sessionSource</footer>
+
+</div><!-- /#app -->
+
+<script>
+// ===================== 비밀번호 게이트 =====================
+const SITE_PASSWORD = 'hankookilbo1';
+
+function tryUnlock(){
+  const val = document.getElementById('gatePassword').value;
+  if(val === SITE_PASSWORD){
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAll();
+  } else {
+    document.getElementById('gateError').textContent = '비밀번호가 일치하지 않아요';
+  }
+}
+document.getElementById('gateSubmit').addEventListener('click', tryUnlock);
+document.getElementById('gatePassword').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') tryUnlock();
+});
+
+// ===================== 데이터 로직 =====================
+const BASE = 'https://hmapapi.hankookilbo.com';
+const GA4_API = 'https://script.google.com/macros/s/AKfycbyv30AInmbAiKd5FmCVr8u1SeOnNJkjqBWQUAI7SE4mjCNwvLfA5159JrYyNGtccNIkOQ/exec';
+const fmt = n => Math.round(n).toLocaleString('ko-KR');
+const channelMeta = [
+  {key:'네이버', color:'var(--naver)'}, {key:'다음', color:'var(--daum)'},
+  {key:'구글', color:'var(--google)'}, {key:'한국일보', color:'var(--hk)'},
+  {key:'직접유입', color:'#8B6F47'}, {key:'기타', color:'#B5AC9C'},
+  {key:'네이트', color:'#C9622D'}, {key:'페이스북', color:'#3B5998'},
+  {key:'bing', color:'#1A7A6E'}, {key:'MSN', color:'#2F6E80'},
+];
+
+let currentPeriod = 'day';
+let currentDate = new Date('2026-06-26');
+
+function ymd(d){
+  return d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+}
+function toInputDate(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function toLabelDate(d){
+  return `${d.getFullYear()}. ${String(d.getMonth()+1).padStart(2,'0')}. ${String(d.getDate()).padStart(2,'0')}.`;
+}
+
+function getRange(period, baseDate){
+  const end = new Date(baseDate);
+  let start = new Date(baseDate);
+  if(period === 'day'){
+    start = new Date(end);
+  } else if(period === 'week'){
+    // baseDate는 ISO 주의 월요일로 이미 맞춰져 들어옴
+    end.setDate(start.getDate() + 6);
+  } else if(period === 'month'){
+    start = new Date(end.getFullYear(), end.getMonth(), 1);
+    end.setTime(new Date(end.getFullYear(), end.getMonth()+1, 0).getTime());
+  }
+  return {start, end};
+}
+
+// <input type="week"> 값('2026-W26')을 그 주 월요일 Date로 변환
+function isoWeekToMonday(weekStr){
+  const [yearStr, weekNumStr] = weekStr.split('-W');
+  const year = Number(yearStr), week = Number(weekNumStr);
+  const jan4 = new Date(year, 0, 4);
+  const jan4Day = jan4.getDay() || 7; // 월=1 ... 일=7
+  const week1Monday = new Date(jan4);
+  week1Monday.setDate(jan4.getDate() - jan4Day + 1);
+  const monday = new Date(week1Monday);
+  monday.setDate(week1Monday.getDate() + (week - 1) * 7);
+  return monday;
+}
+function dateToIsoWeek(d){
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = (date.getDay() + 6) % 7; // 월=0 ... 일=6
+  date.setDate(date.getDate() - day + 3); // 그 주의 목요일로 이동(ISO 기준)
+  const firstThursday = new Date(date.getFullYear(), 0, 4);
+  const diff = date - new Date(date.getFullYear(), 0, 1);
+  const week = Math.round(diff / (7*86400000)) + 1;
+  return `${date.getFullYear()}-W${String(week).padStart(2,'0')}`;
+}
+
+// start~end 사이 모든 날짜를 'YYYYMMDD' 배열로 반환
+function dateRangeList(start, end){
+  const list = [];
+  const cur = new Date(start);
+  while(cur <= end){
+    list.push(ymd(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return list;
+}
+
+async function fetchJSON(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+function setStatus(msg, cls){
+  const el = document.getElementById('statusLine');
+  el.textContent = msg;
+  el.className = 'status-line' + (cls ? ' ' + cls : '');
+}
+
+function renderSkeletons(){
+  document.getElementById('insightGrid').innerHTML = Array.from({length:4}).map(()=>`
+    <div class="insight-card"><div class="label">　</div><div class="skeleton"></div></div>
+  `).join('');
+}
+
+async function loadAll(){
+  renderSkeletons();
+  setStatus('불러오는 중...', 'loading');
+  const {start, end} = getRange(currentPeriod, currentDate);
+  const startStr = ymd(start), endStr = ymd(end);
+  document.getElementById('todayLabel').textContent = toLabelDate(end);
+
+  try{
+    const aggUrl = `${BASE}/cal/daily?code=daily_aggs&startdt=${startStr}&enddt=${endStr}&page=1&psize=31&company_code=hk&caltype=d&periodtype=d`;
+    const aggData = await fetchJSON(aggUrl);
+    const agg = aggData.contents && aggData.contents[0];
+
+    let daily = [];
+    if(currentPeriod !== 'day'){
+      const splitUrl = `${BASE}/cal/daily?code=daily_aggs&startdt=${startStr}&enddt=${endStr}&page=1&psize=31&company_code=hk&caltype=d&periodtype=w`;
+      const splitData = await fetchJSON(splitUrl);
+      daily = splitData.contents || [];
+    } else {
+      daily = aggData.contents || [];
+    }
+
+    const periodLenMs = end.getTime() - start.getTime();
+    const prevEnd = new Date(start.getTime() - 86400000);
+    const prevStart = new Date(prevEnd.getTime() - periodLenMs);
+    const prevAggUrl = `${BASE}/cal/daily?code=daily_aggs&startdt=${ymd(prevStart)}&enddt=${ymd(prevEnd)}&page=1&psize=31&company_code=hk&caltype=d&periodtype=d`;
+    const prevAggData = await fetchJSON(prevAggUrl);
+    const prevAgg = prevAggData.contents && prevAggData.contents[0];
+
+    renderInsightCards(agg, prevAgg, daily);
+
+    // 채널별 PV — 기간 내 모든 날짜를 합산
+    const dateList = dateRangeList(start, end);
+    const chData = await fetchChannelAggregated(dateList);
+    renderChannelBars(chData);
+
+    // 네이버/다음 톱10 — 기간 내 모든 날짜를 기사 단위로 합산 후 재정렬
+    const naverData = await fetchPortalAggregated('na', dateList);
+    const daumData = await fetchPortalAggregated('da', dateList);
+    renderPortalList(naverData, 'naverList', 'naverMeta', startStr, endStr);
+    renderPortalList(daumData, 'daumList', 'daumMeta', startStr, endStr);
+
+    // 구글 톱10 — GA4에 날짜 범위를 그대로 넘겨서 한 번에 합산 조회
+    const googleUrl = `${GA4_API}?type=channel_top10&source=google&start=${toInputDate(start)}&end=${toInputDate(end)}&limit=10`;
+    const googleData = await fetchJSON(googleUrl).catch(()=>null);
+    renderGoogleList(googleData, startStr, endStr);
+
+    setStatus(`업데이트 — ${startStr} ~ ${endStr} 기준`, '');
+  } catch(err){
+    setStatus('데이터를 불러오지 못했어요 (' + err.message + ')', 'error');
+  }
+}
+
+/**
+ * inchannel을 날짜별로 병렬 호출해서 채널별 PV를 합산.
+ * count_preweek(전주 비교용 합계)도 같이 더해서 기간 전체 증감률을 계산.
+ */
+async function fetchChannelAggregated(dateList){
+  const calls = dateList.map(d => {
+    const url = `${BASE}/cal/daily?code=inchannel&site_presscode=hk&inchanneldetail=all&preweek=1w&periodtype=d&psize=200&startdt=${d}&enddt=${d}`;
+    return fetchJSON(url).catch(()=>null);
+  });
+  const results = await Promise.all(calls);
+
+  const sums = {}; // name -> {pv, prev}
+  results.forEach(r => {
+    if(!r || !r.contents) return;
+    r.contents.forEach(c => {
+      const name = c.inchannelcode_txt;
+      if(!name || name === '전체') return;
+      if(!sums[name]) sums[name] = {pv:0, prev:0};
+      sums[name].pv += c.count || 0;
+      sums[name].prev += c.count_preweek || 0;
+    });
+  });
+
+  const contents = Object.keys(sums).map(name => {
+    const s = sums[name];
+    const pct = s.prev ? (s.pv - s.prev) / s.prev * 100 : 0;
+    return {
+      inchannelcode_txt: name,
+      count: s.pv,
+      count_preweek: s.prev,
+      count_preweek_percent: pct
+    };
+  });
+
+  return { contents };
+}
+
+/**
+ * bestnews_in을 날짜별로 병렬 호출해서 기사(nw_newsid) 단위로
+ * portal_pv·viewcnt·visitorcnt는 합산하고, readlen_per·staytime_avg는
+ * viewcnt 가중평균으로 재계산한 뒤 portal_pv 기준 재정렬.
+ */
+async function fetchPortalAggregated(portalCode, dateList){
+  const calls = dateList.map(d => {
+    const url = `${BASE}/portal?code=bestnews_in&portal_code=${portalCode}&startdt=${d}&enddt=${d}&periodtype=d`;
+    return fetchJSON(url).catch(()=>null);
+  });
+  const results = await Promise.all(calls);
+
+  const byArticle = {}; // nw_newsid -> 누적 데이터
+  results.forEach(r => {
+    if(!r || !r.contents) return;
+    r.contents.forEach(d => {
+      const key = d.nw_newsid;
+      if(!byArticle[key]){
+        byArticle[key] = {
+          nw_title: d.nw_title, nw_readurl: d.nw_readurl,
+          nw_jparttxt: d.nw_jparttxt, nw_jname: d.nw_jname,
+          portal_pv: 0, viewcnt: 0, visitorcnt: 0,
+          readlenWeighted: 0
+        };
+      }
+      const a = byArticle[key];
+      a.portal_pv += d.portal_pv || 0;
+      a.viewcnt += d.viewcnt || 0;
+      a.visitorcnt += d.visitorcnt || 0;
+      a.readlenWeighted += (Number(d.readlen_per) || 0) * (d.viewcnt || 0);
+    });
+  });
+
+  const articles = Object.values(byArticle).map(a => ({
+    ...a,
+    readlen_per: a.viewcnt ? (a.readlenWeighted / a.viewcnt).toFixed(2) : '0.00'
+  }));
+  articles.sort((x,y) => y.portal_pv - x.portal_pv);
+
+  const top10 = articles.slice(0,10).map((a, idx) => ({ ...a, dt_rank: idx+1 }));
+  return { contents: top10 };
+}
+
+function deltaPct(now, prev){
+  if(!prev) return null;
+  return (now - prev) / prev * 100;
+}
+function deltaHTML(d){
+  if(d === null || isNaN(d)) return '';
+  const isUp = d > 0;
+  return `<span class="delta ${isUp?'up':'down'}">${isUp?'▲':'▼'} ${Math.abs(d).toFixed(1)}%</span>`;
+}
+
+function renderInsightCards(agg, prevAgg, daily){
+  if(!agg){
+    document.getElementById('insightGrid').innerHTML = `<div class="insight-card"><div class="label">데이터 없음</div></div>`;
+    return;
+  }
+  const pvDelta = deltaPct(agg.viewcnt, prevAgg && prevAgg.viewcnt);
+  const uvDelta = deltaPct(agg.visitorcnt, prevAgg && prevAgg.visitorcnt);
+  const readDelta = deltaPct(agg.readlen_per, prevAgg && prevAgg.readlen_per);
+
+  let peakNote = '';
+  if(daily.length > 1){
+    const sorted = [...daily].sort((a,b)=>b.viewcnt - a.viewcnt);
+    const peak = sorted[0], low = sorted[sorted.length-1];
+    peakNote = `최고 ${peak.ymd.slice(4,6)}/${peak.ymd.slice(6,8)} (${fmt(peak.viewcnt)}) · 최저 ${low.ymd.slice(4,6)}/${low.ymd.slice(6,8)} (${fmt(low.viewcnt)})`;
+  }
+
+  const periodLabel = {day:'전일', week:'전주 동기간', month:'전월 동기간'}[currentPeriod];
+
+  document.getElementById('insightGrid').innerHTML = `
+    <div class="insight-card highlight">
+      <div class="label">총 PV</div>
+      <div class="value">${fmt(agg.viewcnt)}</div>
+      <div class="delta">${deltaHTML(pvDelta)}</div>
+      <div class="note">${periodLabel} 대비</div>
+    </div>
+    <div class="insight-card">
+      <div class="label">총 UV</div>
+      <div class="value">${fmt(agg.visitorcnt)}</div>
+      <div class="delta">${deltaHTML(uvDelta)}</div>
+      <div class="note">${periodLabel} 대비</div>
+    </div>
+    <div class="insight-card">
+      <div class="label">완독률</div>
+      <div class="value">${agg.readlen_per.toFixed(1)}%</div>
+      <div class="delta">${deltaHTML(readDelta)}</div>
+      <div class="note">평균 체류 ${Math.round(agg.staytime_avg)}초</div>
+    </div>
+    <div class="insight-card">
+      <div class="label">기사 수</div>
+      <div class="value">${fmt(agg.articlecnt)}</div>
+      <div class="note">${peakNote || '하루 기준 데이터'}</div>
+    </div>
+  `;
+}
+
+function renderChannelBars(chData){
+  const box = document.getElementById('channelBars');
+  if(!chData || !chData.contents){
+    box.innerHTML = `<div class="empty-note">채널 데이터를 불러오지 못했어요</div>`;
+    return;
+  }
+  const rows = chData.contents
+    .map(c => ({
+      name: c.inchannelcode_txt,
+      pv: c.count,
+      prev: c.count_preweek,
+      pct: c.count_preweek_percent
+    }))
+    .filter(c => c.name && c.name !== '전체')
+    .sort((a,b)=>b.pv-a.pv)
+    .slice(0,10);
+
+  if(rows.length === 0){
+    box.innerHTML = `<div class="empty-note">채널 데이터가 없어요</div>`;
+    return;
+  }
+  const maxPv = Math.max(...rows.map(r=>r.pv));
+
+  box.innerHTML = rows.map(r=>{
+    const meta = channelMeta.find(m=>r.name.includes(m.key)) || {color:'#B5AC9C'};
+    const isUp = r.pct > 0;
+    const widthPct = maxPv ? (r.pv/maxPv*100) : 0;
+    return `
+    <div class="bar-row">
+      <div class="bar-name"><span class="dot" style="background:${meta.color}"></span>${r.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${widthPct}%; background:${meta.color}"></div></div>
+      <div class="bar-pv">${fmt(r.pv)}</div>
+      <div class="bar-delta ${isUp?'up':'down'}">${isUp?'▲':'▼'} ${Math.abs(r.pct).toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPortalList(data, listId, metaId, startStr, endStr){
+  const list = document.getElementById(listId);
+  const meta = document.getElementById(metaId);
+  if(!data || !data.contents || data.contents.length === 0){
+    list.innerHTML = `<li class="empty-note" style="list-style:none;">해당 기간 데이터가 없어요</li>`;
+    meta.textContent = '';
+    return;
+  }
+  meta.textContent = startStr === endStr ? startStr : `${startStr}~${endStr}`;
+  list.innerHTML = data.contents.map(d => `
+    <li class="rank-item">
+      <span class="rank-num">${d.dt_rank}</span>
+      <div class="rank-body">
+        <div class="rank-title"><a href="${d.nw_readurl}" target="_blank">${d.nw_title}</a></div>
+        <div class="rank-sub">
+          <span>${d.nw_jparttxt} ${d.nw_jname}</span>
+          <span>포털PV <b>${fmt(d.portal_pv)}</b></span>
+          <span>닷컴PV <b>${fmt(d.viewcnt)}</b></span>
+          <span>완독률 <b>${d.readlen_per}%</b></span>
+        </div>
+      </div>
+    </li>`).join('');
+}
+
+function renderGoogleList(data, startStr, endStr){
+  const list = document.getElementById('googleList');
+  const meta = document.getElementById('googleMeta');
+  if(!data || data.error){
+    list.innerHTML = `<li class="empty-note" style="list-style:none;">구글 데이터를 불러오지 못했어요${data && data.error ? ' (' + data.error + ')' : ''}</li>`;
+    meta.textContent = '';
+    return;
+  }
+  if(!data.articles || data.articles.length === 0){
+    list.innerHTML = `<li class="empty-note" style="list-style:none;">해당 기간 데이터가 없어요</li>`;
+    meta.textContent = '';
+    return;
+  }
+  meta.textContent = startStr === endStr ? startStr : `${startStr}~${endStr}`;
+  list.innerHTML = data.articles.map(d => `
+    <li class="rank-item">
+      <span class="rank-num">${d.rank}</span>
+      <div class="rank-body">
+        <div class="rank-title"><a href="https://www.hankookilbo.com${d.pagePath}" target="_blank">${d.pageTitle}</a></div>
+        <div class="rank-sub">
+          <span>구글 PV <b>${fmt(d.pv)}</b></span>
+        </div>
+      </div>
+    </li>`).join('');
+}
+
+document.querySelectorAll('.period-tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.period-tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPeriod = btn.dataset.period;
+
+    document.getElementById('dateInput').style.display = currentPeriod === 'day' ? '' : 'none';
+    document.getElementById('weekInput').style.display = currentPeriod === 'week' ? '' : 'none';
+    document.getElementById('monthInput').style.display = currentPeriod === 'month' ? '' : 'none';
+
+    if(currentPeriod === 'week'){
+      document.getElementById('weekInput').value = dateToIsoWeek(currentDate);
+    } else if(currentPeriod === 'month'){
+      document.getElementById('monthInput').value = toInputDate(currentDate).slice(0,7);
+    }
+
+    loadAll();
+  });
+});
+
+document.getElementById('dateInput').addEventListener('change', (e)=>{
+  if(e.target.value){
+    currentDate = new Date(e.target.value);
+    loadAll();
+  }
+});
+document.getElementById('weekInput').addEventListener('change', (e)=>{
+  if(e.target.value){
+    currentDate = isoWeekToMonday(e.target.value);
+    loadAll();
+  }
+});
+document.getElementById('monthInput').addEventListener('change', (e)=>{
+  if(e.target.value){
+    const [y, m] = e.target.value.split('-');
+    currentDate = new Date(Number(y), Number(m)-1, 1);
+    loadAll();
+  }
+});
+
+document.getElementById('dateInput').value = toInputDate(currentDate);
+document.getElementById('weekInput').value = dateToIsoWeek(currentDate);
+document.getElementById('monthInput').value = toInputDate(currentDate).slice(0,7);
+</script>
+
+</body>
+</html>
