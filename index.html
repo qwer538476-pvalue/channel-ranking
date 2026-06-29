@@ -179,6 +179,7 @@ section{margin-bottom:44px;}
 .rank-sub{display:flex; gap:11px; flex-wrap:wrap; font-size:11px; color:var(--ink-faint);}
 .rank-sub b{font-family:var(--mono); font-weight:500; color:var(--ink-soft);}
 .empty-note{padding:36px 16px; text-align:center; color:var(--ink-faint); font-size:13px; font-style:italic;}
+.google-note{padding:12px 18px; font-size:11.5px; color:var(--ink-faint); line-height:1.5; border-top:1px solid var(--rule); background:#F3EEE3;}
 
 footer{text-align:center; color:var(--ink-faint); font-family:var(--mono); font-size:11px; margin-top:56px; padding-top:22px; border-top:1px solid var(--rule);}
 </style>
@@ -268,11 +269,12 @@ footer{text-align:center; color:var(--ink-faint); font-family:var(--mono); font-
   <section>
     <div class="section-head">
       <h2>구글 유입 기사 TOP 10</h2>
-      <div class="desc">검색+디스커버 합산 · PV 기준</div>
+      <div class="desc">GA4 기준 · 검색+디스커버 합산 · PV 기준</div>
     </div>
     <div class="rank-card" style="max-width:600px;">
       <div class="rank-card-head"><span class="dot" style="background:var(--google)"></span><h3>구글</h3><span class="meta" id="googleMeta"></span></div>
       <ul class="rank-list" id="googleList"><li class="empty-note" style="list-style:none;">불러오는 중...</li></ul>
+      <div class="google-note">위 채널별 PV 표의 구글 합계(HERB)와는 집계 방식이 달라 숫자가 정확히 일치하지 않을 수 있어요. 검색과 디스커버는 현재 합산 표기 중이며, 추후 분리할 계획이에요.</div>
     </div>
   </section>
 
@@ -314,7 +316,11 @@ const channelMeta = [
 ];
 
 let currentPeriod = 'day';
-let currentDate = new Date('2026-06-26');
+let currentDate = (() => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d;
+})();
 
 function ymd(d){
   return d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
@@ -582,7 +588,7 @@ function renderInsightCards(agg, prevAgg, daily){
 function renderChannelBars(chData){
   const box = document.getElementById('channelBars');
   if(!chData || !chData.contents){
-    box.innerHTML = `<div class="empty-note">채널 데이터를 불러오지 못했어요</div>`;
+    box.innerHTML = `<div class="empty-note">채널 데이터가 아직 집계되지 않았어요 — 오늘 날짜라면 보통 다음 날 채워져요</div>`;
     return;
   }
   const rows = chData.contents
@@ -597,7 +603,7 @@ function renderChannelBars(chData){
     .slice(0,10);
 
   if(rows.length === 0){
-    box.innerHTML = `<div class="empty-note">채널 데이터가 없어요</div>`;
+    box.innerHTML = `<div class="empty-note">채널 데이터가 아직 집계되지 않았어요 — 오늘 날짜라면 보통 다음 날 채워져요</div>`;
     return;
   }
   const maxPv = Math.max(...rows.map(r=>r.pv));
@@ -620,7 +626,7 @@ function renderPortalList(data, listId, metaId, startStr, endStr){
   const list = document.getElementById(listId);
   const meta = document.getElementById(metaId);
   if(!data || !data.contents || data.contents.length === 0){
-    list.innerHTML = `<li class="empty-note" style="list-style:none;">해당 기간 데이터가 없어요</li>`;
+    list.innerHTML = `<li class="empty-note" style="list-style:none;">해당 기간 데이터가 아직 집계되지 않았어요</li>`;
     meta.textContent = '';
     return;
   }
