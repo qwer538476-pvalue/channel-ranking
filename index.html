@@ -408,16 +408,26 @@ async function loadAll(){
   try{
     const aggUrl = `${BASE}/cal/daily?code=daily_aggs&startdt=${startStr}&enddt=${endStr}&page=1&psize=31&company_code=hk&caltype=d&periodtype=d`;
     const aggData = await fetchJSON(aggUrl);
-    const agg = aggData.contents && aggData.contents[0];
+    const rawRows = aggData.contents || [];
 
-    let daily = [];
-    if(currentPeriod !== 'day'){
-      const splitUrl = `${BASE}/cal/daily?code=daily_aggs&startdt=${startStr}&enddt=${endStr}&page=1&psize=31&company_code=hk&caltype=d&periodtype=w`;
-      const splitData = await fetchJSON(splitUrl);
-      daily = splitData.contents || [];
-    } else {
-      daily = aggData.contents || [];
+    // 기간 내 모든 row를 합산 (일간은 1개 row, 주간/월간은 여러 row)
+    const agg = rawRows.length === 0 ? null : rawRows.reduce((acc, r) => ({
+      viewcnt:      (acc.viewcnt      || 0) + (r.viewcnt      || 0),
+      visitorcnt:   (acc.visitorcnt   || 0) + (r.visitorcnt   || 0),
+      articlecnt:   (acc.articlecnt   || 0) + (r.articlecnt   || 0),
+      readlen_per:  0,
+      staytime_avg: 0,
+      _readlenW:    (acc._readlenW    || 0) + (Number(r.readlen_per)  || 0) * (r.viewcnt || 0),
+      _staytimeW:   (acc._staytimeW   || 0) + (Number(r.staytime_avg) || 0) * (r.viewcnt || 0),
+    }), {});
+
+    if(agg && agg.viewcnt){
+      agg.readlen_per  = agg._readlenW  / agg.viewcnt;
+      agg.staytime_avg = agg._staytimeW / agg.viewcnt;
     }
+
+    // daily는 항상 일별 rows 그대로 사용 (피크/최저 계산용)
+    const daily = rawRows;
 
     const periodLenMs = end.getTime() - start.getTime();
     const prevEnd = new Date(start.getTime() - 86400000);
